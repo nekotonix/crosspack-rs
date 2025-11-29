@@ -9,13 +9,12 @@ struct IndexHeader{
     u32 version; //4
     u32 files_count;
     u32 chunk_size;
-    u64 unknown_field0; //0x0
+    u64 align0; //0x0
     
     u64 absolute_offset_to_data; //offset to data in near archive file
     u64 content_size; //file_size - absolute_offset_to_data
     
-    u64 unknown_field1; //0x0
-    u64 unknown_field2;
+    u128 align1; //0x0
 };
 
 struct PackedTable{
@@ -55,7 +54,7 @@ struct FileInfoEntry{
     u64 offset_name; //offset to string in nametable
     
     u32 filename_length;
-    u32 unk3; //always 0x1?
+    u32 unk; //always 0x1?
     
     u128 md5_hash;
     
@@ -67,7 +66,9 @@ struct FileInfoEntry{
 
 # pk2 file
 just chunks, encoded in TGE or zstandard.. 
-what is TGE? TGE impl in python:
+what is TGE? Targem encoding (just chacha from libsodium lol)
+90% usage of TGE (if non-100%) is crypt lua scripts, that are Compiled lua, but game also can use non-compiled lua
+TGE impl in python:
 ```python
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms
 from cryptography.hazmat.backends import default_backend
@@ -85,3 +86,47 @@ htd = ' '.join(f'{byte:02X}' for byte in BuildResult)
 print(f"{htd}")
 ```
 # grp file
+```c
+struct GRPHeader{
+    u32 sign;
+    u32 offset_data_with_headers; //offset + 16
+    u32 offset_data_with_headers_2; //same??
+    u32 offset_endfile_with_headers; //offset + 16
+};
+
+struct GRPBlockHeader{
+    u32 offset_block_absolute;
+    u32 block_entries_count;
+    
+    u64 align; //0x0 in every game archive
+};
+
+u32 names_count out;
+u32 infos_count out;
+
+struct FileInfoEntry_short{
+    u32 unk; //always 98 3E D0 07, also in old v
+    u32 file_data_offset;
+    u32 file_number;
+};
+
+struct GRPFile{
+    GRPHeader header;
+    GRPBlockHeader filename_block;
+    GRPBlockHeader fileinfo_block;
+    u128 align; //block or align
+
+    names_count = filename_block.block_entries_count;
+    infos_count = fileinfo_block.block_entries_count;
+    
+    u32 filestring_ptr[names_count] @ filename_block.offset_block_absolute;
+    //strings skipped for now, must came from filestring_ptr
+    
+    FileInfoEntry_short infos[infos_count] @ fileinfo_block.offset_block_absolute;
+    
+    
+    //read data using .index..
+};
+
+GRPFile file @ 0x00;
+```
