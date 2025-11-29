@@ -1,0 +1,9 @@
+[package]
+name = "crosspack-rs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rfd = "0.16.0"
+chacha20 = "0.10.0-rc.5"
+hex = "0.4.3"

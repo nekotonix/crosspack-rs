@@ -1,2 +1,5 @@
 # crosspack-rs
-Tools to pack/unpack crossout game archives written in rust
+
+Rust program to pack and unpack crossout resources
+
+CURRENTLY UNDER DEVELOPMENT
